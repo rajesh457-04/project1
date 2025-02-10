@@ -48,54 +48,50 @@ const upload = multer({ storage });
 // Registration Route
 app.post('/register', async (req, res) => {
   try {
-    const { username, email, password, confirmpassword } = req.body;
-    let exist = await Registeruser.findOne({ email });
-    if (exist) {
-      return res.status(400).send('User Already Exist');
-    }
-    if (password !== confirmpassword) {
-      return res.status(400).send('Passwords are not matching');
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    let newUser = new Registeruser({
-      username,
-      email,
-      password: hashedPassword, // Save the hashed password
-    });
-    await newUser.save();
-    res.status(200).send('Registered Successfully');
+      const { username, email, password, confirmpassword } = req.body;
+      let exist = await Registeruser.findOne({ email });
+      if (exist) {
+          return res.status(400).send('User Already Exist');
+      }
+      if (password !== confirmpassword) {
+          return res.status(400).send('Passwords are not matching');
+      }
+      let newUser = new Registeruser({
+          username,
+          email,
+          password // Only save the hashed password
+      });
+      await newUser.save();
+      res.status(200).send('Registered Successfully');
   } catch (err) {
-    console.error(err);
-    return res.status(500).send('Internal Server Error');
+      console.error(err);
+      return res.status(500).send('Internal Server Error');
   }
 });
 
 // Login Route
 app.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+      const { email, password } = req.body;
 
-    // Check if user exists
-    let exist = await Registeruser.findOne({ email });
-    if (!exist) {
-      return res.status(400).send('User Not Found');
-    }
+      // Check if user exists
+      let exist = await Registeruser.findOne({ email });
+      if (!exist) {
+          return res.status(400).send('User  Not Found');
+      }
 
-    // Compare hashed password
-    const isMatch = await bcrypt.compare(password, exist.password);
-    if (!isMatch) {
-      return res.status(400).send('Invalid credentials');
-    }
+      // Compare hashed password
+      const isMatch = await bcrypt.compare(password, exist.password);
+      if (!isMatch) {
+          return res.status(400).send('Invalid credentials');
+      }
 
-    // Create payload for JWT
-    let payload = {
-      user: {
-        id: exist.id, // Use the user's ID
-      },
-    };
+      // Create payload for JWT
+      let payload = {
+          user: {
+              id: exist.id // Use the user's ID
+          }
+      };
 
     // Sign the token using the secret from environment variables
     jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
